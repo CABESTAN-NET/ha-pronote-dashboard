@@ -1,0 +1,447 @@
+# Tableau de bord Pronote pour Home Assistant
+# https://github.com/CABESTAN-NET/ha-pronote-dashboard
+#
+# Prérequis :
+#   - intégration Pronote : https://github.com/delphiki/hass-pronote
+#   - carte custom:button-card (HACS) : https://github.com/custom-cards/button-card
+#
+# Personnalisation (voir README) :
+#   1. Remplacer partout "sensor.pronote_nom_prenom_" par le préfixe de vos capteurs
+#      (ex. sensor.pronote_dupont_lea_)
+#   2. Adapter les variables "prenom" et "etablissement" dans pronote_core ci-dessous
+
+button_card_templates:
+
+  # Socle commun : feuille de style partagée, sans style de carte
+  pronote_core:
+    show_name: false
+    show_icon: false
+    show_state: false
+    triggers_update:
+      - sensor.pronote_nom_prenom_today_s_timetable
+      - sensor.pronote_nom_prenom_next_day_s_timetable
+      - sensor.pronote_nom_prenom_period_s_timetable
+      - sensor.pronote_nom_prenom_grades
+      - sensor.pronote_nom_prenom_averages
+      - sensor.pronote_nom_prenom_evaluations
+      - sensor.pronote_nom_prenom_absences
+      - sensor.pronote_nom_prenom_delays
+      - sensor.pronote_nom_prenom_menus
+      - sensor.pronote_nom_prenom_information_and_surveys
+      - sensor.pronote_nom_prenom_class
+      - sensor.pronote_nom_prenom_current_period
+    tap_action:
+      action: none
+    hold_action:
+      action: none
+    styles:
+      grid:
+        - grid-template-areas: '"html"'
+        - grid-template-columns: 1fr
+        - grid-template-rows: auto
+      custom_fields:
+        html:
+          - text-align: left
+          - justify-self: stretch
+          - white-space: normal
+          - font-size: 14px
+          - line-height: 1.35
+    variables:
+      prenom: Léa
+      etablissement: Lycée Exemple, Ville
+      css: |
+        <style>
+          ha-icon { margin:0 !important; flex:none; }
+          .t { display:flex; align-items:center; gap:10px; font-size:16px; font-weight:700; margin-bottom:12px; }
+          .t .ic { width:34px; height:34px; border-radius:11px; display:flex; align-items:center; justify-content:center; color:#fff; }
+          .t .ic ha-icon { --mdc-icon-size:20px; }
+          .t .droite { margin-left:auto; font-size:12px; font-weight:500; opacity:.65; }
+          .row { display:flex; align-items:center; gap:12px; padding:9px 12px; border-radius:14px; background:rgba(127,127,127,.09); margin-bottom:7px; }
+          .grow { flex:1; min-width:0; }
+          .mat { font-weight:600; overflow:hidden; text-overflow:ellipsis; }
+          .sub { font-size:12px; opacity:.65; }
+          .pill { font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; white-space:nowrap; }
+          .h { display:flex; flex-direction:column; align-items:center; min-width:46px; font-variant-numeric:tabular-nums; }
+          .h span { font-size:11px; opacity:.6; }
+          .annule .mat { text-decoration:line-through; opacity:.6; }
+          .passe { opacity:.45; }
+          .encours { box-shadow:0 0 0 2px #43a047 inset; }
+          .badge { min-width:48px; height:48px; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:17px; line-height:1; }
+          .badge small { font-size:10px; font-weight:600; opacity:.85; margin-top:3px; }
+          .bar { position:relative; height:8px; border-radius:99px; background:rgba(127,127,127,.2); margin-top:6px; }
+          .fill { position:absolute; left:0; top:0; bottom:0; border-radius:99px; }
+          .mark { position:absolute; top:-3px; width:3px; height:14px; border-radius:2px; background:var(--primary-text-color); opacity:.7; }
+          .jour { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; opacity:.6; margin:12px 0 6px; }
+          .jour:first-of-type { margin-top:0; }
+          .vide { text-align:center; padding:18px; opacity:.6; }
+          .alerte { padding:8px 12px; border-radius:12px; background:rgba(229,57,53,.15); color:#e53935; font-weight:600; margin-bottom:10px; }
+          .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+          .stat { text-align:center; padding:10px 4px; border-radius:14px; background:rgba(127,127,127,.09); }
+          .stat b { display:block; font-size:22px; }
+          .stat span { font-size:11px; opacity:.65; }
+          .dot { width:10px; height:10px; border-radius:50%; flex:none; }
+          .acq { display:inline-block; font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px; margin:3px 3px 0 0; color:#fff; }
+          .menu { padding:10px 12px; border-radius:14px; background:rgba(127,127,127,.09); margin-bottom:8px; }
+          .menu div { margin-top:3px; }
+          input.sel { display:none; }
+          .panel { display:none; }
+          .nav { margin-left:auto; display:flex; align-items:center; gap:6px; }
+          .nav label { width:30px; height:30px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; background:rgba(127,127,127,.16); font-size:20px; font-weight:700; user-select:none; }
+          .nav label:hover { background:rgba(127,127,127,.3); }
+          .nav label.off { opacity:.25; cursor:default; }
+          .pts { display:flex; gap:4px; }
+          .pts span { width:6px; height:6px; border-radius:50%; background:rgba(127,127,127,.4); }
+          .pts span.on { background:var(--primary-text-color); }
+        </style>
+
+  # Carte "verre" standard
+  pronote_base:
+    template: pronote_core
+    styles:
+      card:
+        - padding: 16px
+        - border-radius: 22px
+        - background: linear-gradient(160deg, rgba(127,127,127,0.10), rgba(127,127,127,0.03))
+        - border: 1px solid rgba(127,127,127,0.18)
+        - box-shadow: 0 10px 30px rgba(0,0,0,0.18)
+        - cursor: default
+        - pointer-events: auto
+
+  # Bandeau en dégradé
+  pronote_hero:
+    template: pronote_core
+    styles:
+      card:
+        - padding: 0
+        - border-radius: 22px
+        - overflow: hidden
+        - border: none
+        - cursor: default
+        - pointer-events: auto
+
+  # Emploi du temps : jours de cours à venir, navigation ‹ ›
+  pronote_edt:
+    template: pronote_base
+    custom_fields:
+      html: |
+        [[[
+          const p = 'sensor.pronote_nom_prenom_';
+          const lecons = e => (states[p + e] && states[p + e].attributes.lessons) || [];
+          const cle = c => String(c.start_at).slice(0, 10);
+          const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+          const now = new Date();
+          const ajK = iso(now);
+          const dem = new Date(now); dem.setDate(dem.getDate() + 1);
+          const demK = iso(dem);
+          // Jours de la période, complétés par les capteurs du jour et du prochain jour (plus à jour)
+          const parJour = {};
+          for (const c of lecons('period_s_timetable')) (parJour[cle(c)] = parJour[cle(c)] || []).push(c);
+          for (const e of ['today_s_timetable', 'next_day_s_timetable']) { const l = lecons(e); if (l.length) parJour[cle(l[0])] = l; }
+          const dates = Object.keys(parJour).filter(k => k >= ajK).sort().slice(0, 7);
+          const entete = (titre, sous, nav) => `<div class="t"><div class="ic" style="background:#4f46e5"><ha-icon icon="mdi:calendar-clock"></ha-icon></div>
+            <div style="line-height:1.15">${titre}<div class="sub" style="font-weight:500">${sous}</div></div>${nav || ''}</div>`;
+          if (!dates.length) return variables.css + entete('Emploi du temps', '') + `<div class="vide">Pas de cours à venir 🎉</div>`;
+          // Par défaut : aujourd'hui, ou le jour suivant si les cours du jour sont finis
+          let def = 0;
+          if (dates[0] === ajK && dates.length > 1) {
+            const fin = Math.max(...parJour[ajK].map(c => new Date(c.end_at).getTime()));
+            if (now.getTime() > fin) def = 1;
+          }
+          const fl = (id, txt) => `<label for="${id}" onclick="this.getRootNode().getElementById('${id}').checked = true">${txt}</label>`;
+          let css = '<style>', radios = '', panels = '';
+          dates.forEach((k, i) => {
+            const cours = parJour[k].slice().sort((a, b) => String(a.start_at).localeCompare(String(b.start_at)));
+            const [y, m, d] = k.split('-');
+            const date = new Date(+y, m - 1, +d);
+            const titre = k === ajK ? "Aujourd'hui" : k === demK ? 'Demain' : date.toLocaleDateString('fr-FR', { weekday: 'long' }).replace(/^./, s => s.toUpperCase());
+            const sous = date.toLocaleDateString('fr-FR', [ajK, demK].includes(k) ? { weekday: 'long', day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long' });
+            radios += `<input type="radio" class="sel" name="edt" id="edt${i}" ${i === def ? 'checked' : ''}>`;
+            css += `#edt${i}:checked ~ .p${i} { display:block; } `;
+            const nav = `<div class="nav">${i > 0 ? fl('edt' + (i - 1), '‹') : '<label class="off">‹</label>'}
+              <div class="pts">${dates.map((_, j) => `<span class="${j === i ? 'on' : ''}"></span>`).join('')}</div>
+              ${i < dates.length - 1 ? fl('edt' + (i + 1), '›') : '<label class="off">›</label>'}</div>`;
+            let corps = '';
+            const annules = cours.filter(c => c.canceled).length;
+            if (annules) corps += `<div class="alerte">⚠️ ${annules} cours annulé${annules > 1 ? 's' : ''}</div>`;
+            for (const c of cours) {
+              const deb = new Date(c.start_at), fin = new Date(c.end_at);
+              const encours = now >= deb && now < fin;
+              const passe = now >= fin;
+              const coul = c.canceled ? '#e53935' : '#fb8c00';
+              const statut = c.status ? `<span class="pill" style="background:${coul}26;color:${coul}">${c.status}</span>` : '';
+              const live = encours ? `<span class="pill" style="background:#43a04726;color:#43a047">en cours</span>` : '';
+              corps += `<div class="row ${c.canceled ? 'annule' : ''} ${passe ? 'passe' : ''} ${encours ? 'encours' : ''}" style="border-left:5px solid ${c.background_color || '#888'}">
+                <div class="h"><b>${c.start_time}</b><span>${c.end_time}</span></div>
+                <div class="grow"><div class="mat">${c.lesson}${c.test ? ' 📝' : ''}</div>
+                <div class="sub">${c.teacher_name || ''}${c.classroom ? ' · ' + c.classroom : ''}</div></div>${live}${statut}</div>`;
+            }
+            panels += `<div class="panel p${i}">${entete(titre, sous, nav)}${corps}</div>`;
+          });
+          return variables.css + css + '</style>' + radios + panels;
+        ]]]
+
+views:
+  - title: Pronote
+    path: pronote
+    icon: mdi:school
+    type: sections
+    max_columns: 3
+    sections:
+
+      # ---------------------------------------------------------------
+      # Bandeau
+      # ---------------------------------------------------------------
+      - type: grid
+        column_span: 3
+        cards:
+          - type: custom:button-card
+            template: pronote_hero
+            grid_options: &plein
+              columns: full
+              rows: auto
+            custom_fields:
+              html: |
+                [[[
+                  const p = 'sensor.pronote_nom_prenom_';
+                  const st = e => states[p + e] ? states[p + e].state : null;
+                  const at = (e, a) => states[p + e] ? states[p + e].attributes[a] : null;
+                  const num = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; };
+                  const ok = v => v !== null && v !== undefined && !['unknown', 'unavailable'].includes(v);
+                  let t = 0, n = 0;
+                  for (const m of (at('averages', 'averages') || [])) {
+                    const v = num(m.average), sur = num(m.out_of) || 20;
+                    if (v !== null) { t += v * 20 / sur; n++; }
+                  }
+                  const moy = n ? (t / n).toFixed(2).replace('.', ',') : '–';
+                  // Réveil : 6h30, ou 7h30 si le premier cours commence à 9h ou plus tard
+                  const prochains = (at('next_day_s_timetable', 'lessons') || []).filter(c => !c.canceled);
+                  const premier = prochains.length ? prochains[0] : null;
+                  const debut = premier ? premier.start_time : '–';
+                  const reveil = premier ? (premier.start_time >= '09:00' ? '07:30' : '06:30') : '–';
+                  const jourReveil = premier ? new Date(premier.start_at).toLocaleDateString('fr-FR', { weekday: 'long' }) : '';
+                  const infos = at('information_and_surveys', 'unread_count');
+                  const upd = at('today_s_timetable', 'updated_at');
+                  const maj = upd ? new Date(upd).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '–';
+                  const chip = (icon, val, lab) => `<div style="flex:1;min-width:110px;padding:10px 12px;border-radius:16px;background:rgba(15,18,28,.45);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;gap:10px">
+                    <ha-icon icon="${icon}" style="--mdc-icon-size:22px;opacity:.9"></ha-icon>
+                    <div><div style="font-size:18px;font-weight:800;line-height:1.1">${val}</div><div style="font-size:11px;opacity:.85">${lab}</div></div></div>`;
+                  const fond = `radial-gradient(circle at 85% 0%, rgba(56,189,248,.18), transparent 45%), linear-gradient(135deg, #1e293b 0%, #0f172a 100%)`;
+                  return variables.css + `<div style="background:${fond};color:#fff;padding:22px 24px;border-radius:22px;border:1px solid rgba(148,163,184,.18)">
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px">
+                      <div style="width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800">${variables.prenom.charAt(0).toUpperCase()}</div>
+                      <div style="flex:1"><div style="font-size:26px;font-weight:800;letter-spacing:-.02em">${variables.prenom}</div>
+                      <div style="opacity:.9">${ok(st('class')) ? st('class') : ''}${ok(st('current_period')) ? ' · ' + st('current_period') : ''}${variables.etablissement ? ' · ' + variables.etablissement : ''}</div></div>
+                      <div style="font-size:11px;opacity:.8;text-align:right">Pronote<br>màj ${maj}</div>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:10px">
+                      ${chip('mdi:chart-line', moy, 'Moyenne générale')}
+                      ${chip('mdi:alarm', reveil, 'Réveil ' + jourReveil)}
+                      ${chip('mdi:clock-start', debut, 'Début prochain jour')}
+                      ${chip('mdi:email-outline', ok(infos) ? infos : '–', 'Infos non lues')}
+                    </div></div>`;
+                ]]]
+
+      # ---------------------------------------------------------------
+      # Colonne 1 : emploi du temps, cantine, évaluations
+      # ---------------------------------------------------------------
+      - type: grid
+        cards:
+          - type: custom:button-card
+            template: pronote_edt
+            grid_options: *plein
+
+          # Cantine : menus à venir, navigation ‹ ›
+          - type: custom:button-card
+            template: pronote_base
+            grid_options: *plein
+            custom_fields:
+              html: |
+                [[[
+                  const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                  const now = new Date(), ajK = iso(now);
+                  const dem = new Date(now); dem.setDate(dem.getDate() + 1);
+                  const demK = iso(dem);
+                  const menus = (((states['sensor.pronote_nom_prenom_menus'] || {}).attributes || {}).menus || [])
+                    .filter(m => m.is_lunch && m.date >= ajK)
+                    .sort((a, b) => a.date.localeCompare(b.date));
+                  const entete = (titre, sous, nav) => `<div class="t"><div class="ic" style="background:#ea580c"><ha-icon icon="mdi:silverware-fork-knife"></ha-icon></div>
+                    <div style="line-height:1.15">${titre}<div class="sub" style="font-weight:500">${sous}</div></div>${nav || ''}</div>`;
+                  if (!menus.length) return variables.css + entete('Cantine', '') + `<div class="vide">Pas de menu publié</div>`;
+                  const plats = [['first_meal', '🥗', 'Entrée'], ['main_meal', '🍗', 'Plat'], ['side_meal', '🥔', 'Accompagnement'], ['cheese', '🧀', 'Fromage'], ['dessert', '🍰', 'Dessert'], ['other_meal', '➕', 'Autre']];
+                  const fl = (id, txt) => `<label for="${id}" onclick="this.getRootNode().getElementById('${id}').checked = true">${txt}</label>`;
+                  let css = '<style>', radios = '', panels = '';
+                  menus.forEach((m, i) => {
+                    const [y, mo, d] = m.date.split('-');
+                    const date = new Date(+y, mo - 1, +d);
+                    const titre = m.date === ajK ? "Cantine aujourd'hui" : m.date === demK ? 'Cantine demain' : 'Cantine ' + date.toLocaleDateString('fr-FR', { weekday: 'long' });
+                    const sous = date.toLocaleDateString('fr-FR', [ajK, demK].includes(m.date) ? { weekday: 'long', day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long' });
+                    radios += `<input type="radio" class="sel" name="menu" id="menu${i}" ${i === 0 ? 'checked' : ''}>`;
+                    css += `#menu${i}:checked ~ .p${i} { display:block; } `;
+                    const nav = `<div class="nav">${i > 0 ? fl('menu' + (i - 1), '‹') : '<label class="off">‹</label>'}
+                      <div class="pts">${menus.map((_, j) => `<span class="${j === i ? 'on' : ''}"></span>`).join('')}</div>
+                      ${i < menus.length - 1 ? fl('menu' + (i + 1), '›') : '<label class="off">›</label>'}</div>`;
+                    let corps = '';
+                    for (const [cle, ico, lib] of plats) {
+                      const noms = (m[cle] || []).map(f => f.name).filter(Boolean);
+                      if (noms.length) corps += `<div class="row" style="align-items:flex-start"><span style="font-size:20px;line-height:1">${ico}</span>
+                        <div class="grow"><div class="sub">${lib}</div><div>${noms.join(' · ')}</div></div></div>`;
+                    }
+                    panels += `<div class="panel p${i}">${entete(titre, sous, nav)}${corps || '<div class="vide">Menu vide</div>'}</div>`;
+                  });
+                  return variables.css + css + '</style>' + radios + panels;
+                ]]]
+
+          # Évaluations par compétences
+          - type: custom:button-card
+            template: pronote_base
+            grid_options: *plein
+            custom_fields:
+              html: |
+                [[[
+                  const s = states['sensor.pronote_nom_prenom_evaluations'];
+                  const evals = ((s && s.attributes.evaluations) || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
+                  const couleur = a => {
+                    const t = ((a.level || '') + ' ' + (a.abbreviation || '')).toLowerCase();
+                    if (t.includes('très bon') || t.includes('a+')) return '#15803d';
+                    if (t.includes('insuffisant')) return '#dc2626';
+                    if (t.includes('fragile')) return '#f59e0b';
+                    if (t.includes('satisf')) return '#22c55e';
+                    return '#78909c';
+                  };
+                  let out = variables.css + `<div class="t"><div class="ic" style="background:#f59e0b"><ha-icon icon="mdi:checkbox-multiple-marked-circle"></ha-icon></div>Évaluations</div>`;
+                  if (!evals.length) return out + `<div class="vide">Aucune évaluation pour cette période</div>`;
+                  for (const e of evals.slice(0, 6)) {
+                    const [y, m, d] = String(e.date).slice(0, 10).split('-');
+                    const acq = (e.acquisitions || []).map(a => `<span class="acq" style="background:${couleur(a)}" title="${a.name || ''} : ${a.level || ''}">${a.abbreviation || '?'}</span>`).join('');
+                    out += `<div class="row"><div class="h"><b>${d}</b><span>${m}</span></div>
+                      <div class="grow"><div class="mat">${e.subject}</div><div class="sub">${e.name || ''}</div><div>${acq}</div></div></div>`;
+                  }
+                  return out + `<div class="sub" style="margin-top:6px">
+                    <span class="acq" style="background:#15803d">A+</span>très bon
+                    <span class="acq" style="background:#22c55e">A</span>satisfaisant
+                    <span class="acq" style="background:#f59e0b">B</span>fragile
+                    <span class="acq" style="background:#dc2626">C</span>insuffisant</div>`;
+                ]]]
+
+      # ---------------------------------------------------------------
+      # Colonne 2 : notes et informations
+      # ---------------------------------------------------------------
+      - type: grid
+        cards:
+          # Dernières notes
+          - type: custom:button-card
+            template: pronote_base
+            grid_options: *plein
+            custom_fields:
+              html: |
+                [[[
+                  const s = states['sensor.pronote_nom_prenom_grades'];
+                  const notes = ((s && s.attributes.grades) || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
+                  const num = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; };
+                  const mat = t => { const p = String(t).split(' > '); return p.length === 2 && p[0] === p[1] ? p[0] : String(t); };
+                  let out = variables.css + `<div class="t"><div class="ic" style="background:#0ea5e9"><ha-icon icon="mdi:star-circle"></ha-icon></div>Dernières notes</div>`;
+                  if (!notes.length) return out + `<div class="vide">Aucune note pour cette période</div>`;
+                  for (const g of notes.slice(0, 8)) {
+                    const v = num(g.grade), sur = num(g.out_of) || 20, cl = num(g.class_average);
+                    const r = v !== null ? v / sur : null;
+                    const coul = r === null ? '#78909c' : r >= 0.75 ? '#16a34a' : r >= 0.5 ? '#f59e0b' : '#dc2626';
+                    const [y, m, d] = String(g.date).slice(0, 10).split('-');
+                    const coef = num(g.coefficient);
+                    out += `<div class="row">
+                      <div class="badge" style="background:${coul}${v === null ? ';font-size:13px' : ''}">${v === null ? ({ Absent: 'Abs', NonRendu: 'NR', NonNote: 'NN', Dispense: 'Disp' }[g.grade] || String(g.grade).slice(0, 4)) : g.grade}<small>/${g.out_of}</small></div>
+                      <div class="grow"><div class="mat">${mat(g.subject)}</div>
+                      <div class="sub">${d}/${m}${coef && coef !== 1 ? ' · coef ' + g.coefficient : ''}${g.comment ? ' · ' + g.comment : ''}</div></div>
+                      <div style="text-align:right"><div class="sub">classe</div><b>${g.class_average || '–'}</b></div></div>`;
+                  }
+                  return out;
+                ]]]
+
+          # Informations et sondages
+          - type: custom:button-card
+            template: pronote_base
+            grid_options: *plein
+            custom_fields:
+              html: |
+                [[[
+                  const s = states['sensor.pronote_nom_prenom_information_and_surveys'];
+                  const infos = ((s && s.attributes.information_and_surveys) || []).slice()
+                    .sort((a, b) => String(b.creation_date || b.start_date).localeCompare(String(a.creation_date || a.start_date)));
+                  const nonLues = infos.filter(i => !i.read).length;
+                  let out = variables.css + `<div class="t"><div class="ic" style="background:#2563eb"><ha-icon icon="mdi:email-newsletter"></ha-icon></div>Informations<span class="droite">${nonLues} non lue${nonLues > 1 ? 's' : ''}</span></div>`;
+                  if (!infos.length) return out + `<div class="vide">Aucune information</div>`;
+                  for (const i of infos.slice(0, 5)) {
+                    const [y, m, d] = String(i.creation_date || i.start_date || '').slice(0, 10).split('-');
+                    const txt = String(i.content || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                    const court = txt.length > 140 ? txt.slice(0, 140) + '…' : txt;
+                    out += `<div class="row" style="align-items:flex-start">
+                      <span class="dot" style="margin-top:5px;background:${i.read ? 'rgba(127,127,127,.4)' : '#2563eb'}"></span>
+                      <div class="grow"><div class="mat" style="${i.read ? 'font-weight:500' : ''}">${i.title || 'Sans titre'}${i.survey ? ' 🗳️' : ''}</div>
+                      <div class="sub">${i.author || ''}${d ? ' · ' + d + '/' + m : ''}</div>
+                      ${court ? `<div class="sub" style="margin-top:3px">${court}</div>` : ''}</div></div>`;
+                  }
+                  return out;
+                ]]]
+
+      # ---------------------------------------------------------------
+      # Colonne 3 : moyennes et vie scolaire
+      # ---------------------------------------------------------------
+      - type: grid
+        cards:
+          # Moyennes par matière
+          - type: custom:button-card
+            template: pronote_base
+            grid_options: *plein
+            custom_fields:
+              html: |
+                [[[
+                  const s = states['sensor.pronote_nom_prenom_averages'];
+                  const moy = (s && s.attributes.averages) || [];
+                  const num = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; };
+                  const mat = t => { const p = String(t).split(' > '); return p.length === 2 && p[0] === p[1] ? p[0] : String(t); };
+                  let out = variables.css + `<div class="t"><div class="ic" style="background:#16a34a"><ha-icon icon="mdi:chart-bar"></ha-icon></div>Moyennes<span class="droite">▮ = moyenne de la classe</span></div>`;
+                  if (!moy.length) return out + `<div class="vide">Pas encore de moyennes</div>`;
+                  for (const m of moy) {
+                    const v = num(m.average), c = num(m['class']), sur = num(m.out_of) || 20;
+                    const pct = v !== null ? Math.max(0, Math.min(100, v / sur * 100)) : 0;
+                    const pc = c !== null ? Math.max(0, Math.min(100, c / sur * 100)) : null;
+                    const coul = v === null ? '#78909c' : c === null ? '#0ea5e9' : v >= c ? '#16a34a' : '#f59e0b';
+                    out += `<div style="margin-bottom:11px">
+                      <div style="display:flex;align-items:baseline;gap:8px">
+                        <span class="dot" style="background:${m.background_color || '#888'}"></span>
+                        <span class="mat grow" style="font-size:13px">${mat(m.subject)}</span>
+                        <b style="color:${coul}">${m.average ?? '–'}</b><span class="sub">classe ${c !== null ? m['class'] : '–'}</span></div>
+                      <div class="bar"><div class="fill" style="width:${pct}%;background:${coul}"></div>${pc !== null ? `<div class="mark" style="left:calc(${pc}% - 1px)"></div>` : ''}</div></div>`;
+                  }
+                  return out;
+                ]]]
+
+          # Vie scolaire : absences et retards
+          - type: custom:button-card
+            template: pronote_base
+            grid_options: *plein
+            custom_fields:
+              html: |
+                [[[
+                  const abs = ((states['sensor.pronote_nom_prenom_absences'] || {}).attributes || {}).absences || [];
+                  const ret = ((states['sensor.pronote_nom_prenom_delays'] || {}).attributes || {}).delays || [];
+                  const nonJ = abs.filter(a => !a.justified).length + ret.filter(r => !r.justified).length;
+                  const dm = v => { const [y, m, d] = String(v).slice(0, 10).split('-'); return `${d}/${m}`; };
+                  let out = variables.css + `<div class="t"><div class="ic" style="background:#0d9488"><ha-icon icon="mdi:clipboard-account"></ha-icon></div>Vie scolaire</div>
+                    <div class="stats">
+                      <div class="stat"><b>${abs.length}</b><span>absence${abs.length > 1 ? 's' : ''}</span></div>
+                      <div class="stat"><b>${ret.length}</b><span>retard${ret.length > 1 ? 's' : ''}</span></div>
+                      <div class="stat"><b style="color:${nonJ ? '#dc2626' : '#16a34a'}">${nonJ}</b><span>non justifié${nonJ > 1 ? 's' : ''}</span></div>
+                    </div>`;
+                  const items = [
+                    ...abs.map(a => ({ date: String(a['from']), type: 'Absence', detail: a.hours || '', motif: a.reason, ok: a.justified, icone: 'mdi:account-off' })),
+                    ...ret.map(r => ({ date: String(r.date), type: 'Retard', detail: r.minutes + ' min', motif: r.reasons, ok: r.justified, icone: 'mdi:clock-alert' })),
+                  ].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6);
+                  if (!items.length) return out + `<div class="vide">Rien à signaler 👍</div>`;
+                  for (const i of items) {
+                    const coul = i.ok ? '#16a34a' : '#dc2626';
+                    out += `<div class="row"><ha-icon icon="${i.icone}" style="--mdc-icon-size:20px;color:${coul}"></ha-icon>
+                      <div class="grow"><div class="mat">${i.type} · ${dm(i.date)}</div><div class="sub">${i.detail}${i.motif ? ' · ' + i.motif : ''}</div></div>
+                      <span class="pill" style="background:${coul}26;color:${coul}">${i.ok ? 'justifié' : 'non justifié'}</span></div>`;
+                  }
+                  return out;
+                ]]]

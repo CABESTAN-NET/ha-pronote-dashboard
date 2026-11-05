@@ -1,0 +1,93 @@
+# Notifications Pronote pour Home Assistant
+# https://github.com/CABESTAN-NET/ha-pronote-dashboard
+#
+# À coller dans automations.yaml (ou à recréer via l'éditeur YAML d'une automation).
+# Personnalisation :
+#   - "sensor.pronote_nom_prenom_" : préfixe de vos capteurs Pronote
+#   - "notify.mon_telegram"        : votre entité de notification
+#     (Telegram bot, application mobile notify.mobile_app_xxx, etc.)
+#   - "Léa"                        : prénom affiché dans le titre des notifications EdT
+
+# ---------------------------------------------------------------------------
+# 1. Nouvelle note
+#    Déclenchée par l'événement pronote_event (type new_grade) de l'intégration.
+#    Test sans attendre une vraie note : Outils de développement > Événements,
+#    type "pronote_event", données :
+#      type: new_grade
+#      child_nickname: Léa
+#      data: { subject: MATHEMATIQUES, grade_out_of: 15/20, comment: Test, date: "2026-11-05" }
+# ---------------------------------------------------------------------------
+- id: pronote_nouvelle_note
+  alias: Pronote - Nouvelle note
+  description: Envoie chaque nouvelle note publiée sur Pronote
+  triggers:
+    - trigger: event
+      event_type: pronote_event
+      event_data:
+        type: new_grade
+  actions:
+    - action: notify.send_message
+      target:
+        entity_id: notify.mon_telegram
+      data:
+        title: "📝 Pronote : nouvelle note pour {{ trigger.event.data.child_nickname }}"
+        message: >-
+          {{ trigger.event.data.data.subject }} : {{ trigger.event.data.data.grade_out_of }}
+          {%- if trigger.event.data.data.comment %} ({{ trigger.event.data.data.comment }}){% endif %}
+          {%- set d = (trigger.event.data.data.date | string)[:10].split('-') %}
+          {%- if d | count == 3 %} le {{ d[2] }}/{{ d[1] }}/{{ d[0] }}{% endif %}
+  mode: queued
+
+# ---------------------------------------------------------------------------
+# 2. Changement d'emploi du temps / prof absent
+#    Surveille aujourd'hui et le prochain jour de cours. Ne notifie que les
+#    NOUVEAUX changements (cours annulé, prof absent, remplacement, salle...),
+#    pas ceux déjà signalés à la mise à jour précédente.
+# ---------------------------------------------------------------------------
+- id: pronote_changement_edt
+  alias: Pronote - Changement d'emploi du temps
+  description: Cours annulé, modifié ou prof absent (aujourd'hui et prochain jour de cours)
+  triggers:
+    - trigger: state
+      entity_id:
+        - sensor.pronote_nom_prenom_today_s_timetable
+        - sensor.pronote_nom_prenom_next_day_s_timetable
+      attribute: lessons
+  variables:
+    # Cours déjà modifiés avant la mise à jour
+    avant: >-
+      {%- set ns = namespace(k=[]) -%}
+      {%- if trigger.from_state is defined and trigger.from_state -%}
+      {%- for x in trigger.from_state.attributes.lessons | default([], true) if x.canceled or x.status -%}
+      {%- set ns.k = ns.k + [x.lesson ~ '|' ~ x.start_at ~ '|' ~ x.status] -%}
+      {%- endfor -%}
+      {%- endif -%}
+      {{ ns.k }}
+    # Cours modifiés qui n'y étaient pas encore
+    nouveaux: >-
+      {%- if trigger.to_state is defined -%}
+      {%- set cours = trigger.to_state.attributes.lessons | default([], true) -%}
+      {%- else -%}
+      {%- set cours = state_attr('sensor.pronote_nom_prenom_today_s_timetable', 'lessons') | default([], true) -%}
+      {%- endif -%}
+      {%- set ns = namespace(l=[]) -%}
+      {%- for x in cours if (x.canceled or x.status)
+           and (x.lesson ~ '|' ~ x.start_at ~ '|' ~ x.status) not in avant -%}
+      {%- set ns.l = ns.l + [x.lesson ~ ' le ' ~ (as_timestamp(x.start_at) | timestamp_custom('%d/%m', true))
+           ~ ' de ' ~ x.start_time ~ ' à ' ~ x.end_time ~ ' : ' ~ (x.status or 'annulé')] -%}
+      {%- endfor -%}
+      {{ ns.l }}
+    prof_absent: "{{ nouveaux | select('search', '(?i)absent') | list | count > 0 }}"
+    titre: "{{ '🚫 Prof absent' if prof_absent else '🧑‍🏫 Changement EdT' }} - Léa"
+    texte: "{{ nouveaux | join('\n') if nouveaux else 'Aucun changement (lancement manuel)' }}"
+  conditions:
+    - condition: template
+      value_template: "{{ nouveaux | count > 0 }}"
+  actions:
+    - action: notify.send_message
+      target:
+        entity_id: notify.mon_telegram
+      data:
+        title: "{{ titre }}"
+        message: "{{ texte }}"
+  mode: queued
