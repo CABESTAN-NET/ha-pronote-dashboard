@@ -262,8 +262,8 @@ views:
                   const dem = new Date(now); dem.setDate(dem.getDate() + 1);
                   const demK = iso(dem);
                   const menus = (((states['sensor.pronote_nom_prenom_menus'] || {}).attributes || {}).menus || [])
-                    .filter(m => m.is_lunch && m.date >= ajK)
-                    .sort((a, b) => a.date.localeCompare(b.date));
+                    .filter(m => (m.is_lunch || m.is_dinner) && m.date >= ajK)
+                    .sort((a, b) => a.date.localeCompare(b.date) || a.is_dinner - b.is_dinner);
                   const entete = (titre, sous, nav) => `<div class="t"><div class="ic" style="background:#ea580c"><ha-icon icon="mdi:silverware-fork-knife"></ha-icon></div>
                     <div style="line-height:1.15">${titre}<div class="sub" style="font-weight:500">${sous}</div></div>${nav || ''}</div>`;
                   if (!menus.length) return variables.css + entete('Cantine', '') + `<div class="vide">Pas de menu publié</div>`;
@@ -273,7 +273,8 @@ views:
                   menus.forEach((m, i) => {
                     const [y, mo, d] = m.date.split('-');
                     const date = new Date(+y, mo - 1, +d);
-                    const titre = m.date === ajK ? "Cantine aujourd'hui" : m.date === demK ? 'Cantine demain' : 'Cantine ' + date.toLocaleDateString('fr-FR', { weekday: 'long' });
+                    const repas = m.is_dinner ? 'Dîner' : 'Cantine';
+                    const titre = repas + ' ' + (m.date === ajK ? "aujourd'hui" : m.date === demK ? 'demain' : date.toLocaleDateString('fr-FR', { weekday: 'long' }));
                     const sous = date.toLocaleDateString('fr-FR', [ajK, demK].includes(m.date) ? { weekday: 'long', day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long' });
                     radios += `<input type="radio" class="sel" name="menu" id="menu${i}" ${i === 0 ? 'checked' : ''}>`;
                     css += `#menu${i}:checked ~ .p${i} { display:block; } `;
@@ -282,7 +283,7 @@ views:
                       ${i < menus.length - 1 ? fl('menu' + (i + 1), '›') : '<label class="off">›</label>'}</div>`;
                     let corps = '';
                     for (const [cle, ico, lib] of plats) {
-                      const noms = (m[cle] || []).map(f => f.name).filter(Boolean);
+                      const noms = (m[cle] || []).map(f => (f.name || '').trim()).filter(Boolean);
                       if (noms.length) corps += `<div class="row" style="align-items:flex-start"><span style="font-size:20px;line-height:1">${ico}</span>
                         <div class="grow"><div class="sub">${lib}</div><div>${noms.join(' · ')}</div></div></div>`;
                     }
