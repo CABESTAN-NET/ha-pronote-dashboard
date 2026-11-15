@@ -93,14 +93,6 @@ Le bouton « Exécuter » d'une automation ne permet pas de tester celle des not
 - **Nombre de notes affichées** : le `8` de `i === 8` (et de `notes.length - 8`) dans la carte « Dernières notes ». Au-delà, les notes sont repliées.
 - **Disposition** : le tableau utilise une vue en sections. Chaque colonne est une section, et on déplace une carte en déplaçant son bloc dans le fichier.
 
-## Variantes
-
-- [dashboards/variantes/pronote_notes_messages.yaml](dashboards/variantes/pronote_notes_messages.yaml) : version proposée par Guillaume (groupe Facebook Home Assistant), mise en forme. Elle ajoute :
-  - **toutes les notes du trimestre** : les 8 dernières s'affichent, les autres se déplient avec « Voir les N autres notes » ;
-  - **les messages non lus** : le compteur du bandeau se déplie et affiche le titre, la date et le texte de chaque message.
-
-Pour l'utiliser, suivez l'installation du tableau de bord avec ce fichier à la place de `dashboards/pronote.yaml` (même préfixe de capteurs, même prénom à régler). Les deux versions ne se combinent pas : choisissez l'une ou l'autre.
-
 ## Notes techniques
 
 Pour celles et ceux qui veulent adapter le code :

@@ -232,6 +232,10 @@ views:
                   const reveil = premier ? (premier.start_time >= '09:00' ? '07:30' : '06:30') : '–';
                   const jourReveil = premier ? new Date(premier.start_at).toLocaleDateString('fr-FR', { weekday: 'long' }) : '';
                   const infos = at('information_and_surveys', 'unread_count');
+                  const messages = (at('information_and_surveys', 'information_and_surveys') || []).filter(m => !m.read);
+                  const echappe = v => String(v ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                  const dm = s => { const [y, mo, d] = String(s || '').slice(0, 10).split('-'); return d && mo ? d + '/' + mo : ''; };
                   const upd = at('today_s_timetable', 'updated_at');
                   const maj = upd ? new Date(upd).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '–';
                   const chip = (icon, val, lab) => `<div style="flex:1;min-width:110px;padding:10px 12px;border-radius:16px;background:rgba(15,18,28,.45);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;gap:10px">
@@ -249,7 +253,19 @@ views:
                       ${chip('mdi:chart-line', moy, 'Moyenne générale')}
                       ${chip('mdi:alarm', reveil, 'Réveil ' + jourReveil)}
                       ${chip('mdi:clock-start', debut, 'Début prochain jour')}
-                      ${chip('mdi:email-outline', ok(infos) ? infos : '–', 'Infos non lues')}
+                      <details style="flex:1;min-width:110px;padding:10px 12px;border-radius:16px;background:rgba(15,18,28,.45);border:1px solid rgba(255,255,255,.14)">
+                        <summary onclick="event.stopPropagation();" ontouchstart="event.stopPropagation()" ontouchend="event.stopPropagation()" onpointerdown="event.stopPropagation()" onpointerup="event.stopPropagation()" onmousedown="event.stopPropagation()" style="touch-action:manipulation;cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px">
+                          <ha-icon icon="mdi:email-outline" style="--mdc-icon-size:22px;opacity:.9"></ha-icon>
+                          <div><div style="font-size:18px;font-weight:800;line-height:1.1">${ok(infos) ? infos : '–'}</div><div style="font-size:11px;opacity:.85">Infos non lues</div></div>
+                        </summary>
+                        <div style="margin-top:12px;max-height:350px;overflow-y:auto">
+                          ${messages.length ? messages.map(m => `<div style="padding:10px;margin-bottom:8px;background:rgba(127,127,127,.15);border-radius:10px">
+                            <b>${echappe(m.title || 'Sans titre')}</b>
+                            <div style="font-size:11px;opacity:.7">${dm(m.creation_date || m.start_date)}</div>
+                            <div style="margin-top:6px">${echappe(m.content)}</div>
+                          </div>`).join('') : '<div>Aucun message non lu</div>'}
+                        </div>
+                      </details>
                     </div></div>`;
                 ]]]
 
@@ -354,7 +370,8 @@ views:
                   const mat = t => { const p = String(t).split(' > '); return p.length === 2 && p[0] === p[1] ? p[0] : String(t); };
                   let out = variables.css + `<div class="t"><div class="ic" style="background:#0ea5e9"><ha-icon icon="mdi:star-circle"></ha-icon></div>Dernières notes</div>`;
                   if (!notes.length) return out + `<div class="vide">Aucune note pour cette période</div>`;
-                  for (const g of notes.slice(0, 8)) {
+                  for (const [i, g] of notes.entries()) {
+                    if (i === 8) out += `<details style="margin-top:12px"><summary onclick="event.stopPropagation();" ontouchstart="event.stopPropagation()" ontouchend="event.stopPropagation()" onpointerdown="event.stopPropagation()" onpointerup="event.stopPropagation()" onmousedown="event.stopPropagation()" style="touch-action:manipulation;cursor:pointer;padding:12px;background:rgba(127,127,127,.12);border-radius:10px;font-weight:600">Voir les ${notes.length - 8} autres notes</summary>`;
                     const v = num(g.grade), sur = num(g.out_of) || 20, cl = num(g.class_average);
                     const r = v !== null ? v / sur : null;
                     const coul = r === null ? '#78909c' : r >= 0.75 ? '#16a34a' : r >= 0.5 ? '#f59e0b' : '#dc2626';
@@ -366,6 +383,7 @@ views:
                       <div class="sub">${d}/${m}${coef && coef !== 1 ? ' · coef ' + g.coefficient : ''}${g.comment ? ' · ' + g.comment : ''}</div></div>
                       <div style="text-align:right"><div class="sub">classe</div><b>${g.class_average || '–'}</b></div></div>`;
                   }
+                  if (notes.length > 8) out += '</details>';
                   return out;
                 ]]]
 
