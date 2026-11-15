@@ -8,10 +8,10 @@ Un tableau de bord complet pour suivre la scolarité de son enfant dans Home Ass
 
 ## Ce qu'il affiche
 
-- **Bandeau** : classe, période, moyenne générale, heure de réveil conseillée, début des cours du prochain jour, infos non lues.
+- **Bandeau** : classe, période, moyenne générale officielle de Pronote, heure de réveil conseillée, début des cours du prochain jour, infos non lues. Un clic sur les infos non lues affiche le texte des messages.
 - **Emploi du temps** : les prochains jours de cours, avec des flèches ‹ › pour passer d'un jour à l'autre. Les cours annulés sont barrés, les statuts (prof absent, changement de salle…) apparaissent en pastille et le cours en cours est mis en évidence. Une fois les cours du jour terminés, la carte s'ouvre sur le lendemain.
 - **Cantine** : les menus à venir, un par page, avec les mêmes flèches.
-- **Dernières notes** : note en couleur selon le résultat, moyenne de la classe, coefficient et commentaire.
+- **Dernières notes** : note en couleur selon le résultat, moyenne de la classe, coefficient et commentaire. Les 8 dernières s'affichent, les autres se déplient avec « Voir les N autres notes ».
 - **Moyennes** : une barre par matière avec un repère pour la moyenne de la classe (vert au-dessus, orange en dessous).
 - **Évaluations par compétences** : pastilles A+ / A / B / C.
 - **Vie scolaire** : compteurs et liste des absences et retards, justifiés ou non.
@@ -90,7 +90,7 @@ Le bouton « Exécuter » d'une automation ne permet pas de tester celle des not
 
 - **Heure de réveil** : la règle est dans la carte du bandeau. Par défaut, 6h30, ou 7h30 si le premier cours non annulé commence à 9h ou plus tard. Cherchez `'09:00'` dans le fichier pour l'adapter.
 - **Nombre de jours d'emploi du temps** : `.slice(0, 7)` dans le modèle `pronote_edt`.
-- **Nombre de notes affichées** : `notes.slice(0, 8)` dans la carte « Dernières notes ».
+- **Nombre de notes affichées** : le `8` de `i === 8` (et de `notes.length - 8`) dans la carte « Dernières notes ». Au-delà, les notes sont repliées.
 - **Disposition** : le tableau utilise une vue en sections. Chaque colonne est une section, et on déplace une carte en déplaçant son bloc dans le fichier.
 
 ## Variantes
@@ -108,6 +108,7 @@ Pour celles et ceux qui veulent adapter le code :
 - Les cartes sont des `custom:button-card` dont tout le contenu est généré en HTML par un modèle JavaScript (`custom_fields.html`). La feuille de style commune est dans la variable `css` du modèle `pronote_core`.
 - **N'utilisez pas `html` comme nom de variable** dans un modèle button-card : c'est déjà un paramètre de la fonction, et sa redéclaration provoque une erreur `ButtonCardJSTemplateError`.
 - Les flèches ‹ › reposent sur des boutons radio cachés et du CSS (`:checked ~ .panel`). button-card annule l'action par défaut des clics sur la carte, donc chaque flèche coche elle-même son bouton radio via `onclick`. Il faut aussi `pointer-events: auto` sur la carte, sinon une carte sans `tap_action` ne reçoit aucun clic.
+- Sur mobile, un élément cliquable dans une carte (flèche ‹ ›, « Voir les autres notes », message) doit stopper les événements tactiles et pointer (`ontouchstart`, `ontouchend`, `onpointerdown`, `onpointerup`, `onmousedown` avec `event.stopPropagation()`), sinon la carte l'avale et le clic ne passe pas. Ajoutez `touch-action: manipulation` pour une zone de toucher réactive.
 - `triggers_update` liste uniquement les capteurs Pronote. Une mise à jour d'une autre entité ne réaffiche donc pas la carte et ne la renvoie pas sur aujourd'hui pendant la navigation.
 
 ## Crédits
