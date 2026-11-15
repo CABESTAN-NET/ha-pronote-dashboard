@@ -215,7 +215,9 @@ views:
                     const v = num(m.average), sur = num(m.out_of) || 20;
                     if (v !== null) { t += v * 20 / sur; n++; }
                   }
-                  const moy = n ? (t / n).toFixed(2).replace('.', ',') : '–';
+                  // Moyenne générale officielle de Pronote (pondérée par les coefficients), sinon moyenne simple des matières
+                  const officielle = num(st('overall_average'));
+                  const moy = officielle !== null ? officielle.toFixed(2).replace('.', ',') : n ? (t / n).toFixed(2).replace('.', ',') : '–';
                   // Réveil : 6h30, ou 7h30 si le premier cours commence à 9h ou plus tard
                   const prochains = (at('next_day_s_timetable', 'lessons') || []).filter(c => !c.canceled);
                   const premier = prochains.length ? prochains[0] : null;
