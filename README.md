@@ -111,6 +111,16 @@ Pour celles et ceux qui veulent adapter le code :
 - Sur mobile, un élément cliquable dans une carte (flèche ‹ ›, « Voir les autres notes », message) doit stopper les événements tactiles et pointer (`ontouchstart`, `ontouchend`, `onpointerdown`, `onpointerup`, `onmousedown` avec `event.stopPropagation()`), sinon la carte l'avale et le clic ne passe pas. Ajoutez `touch-action: manipulation` pour une zone de toucher réactive.
 - `triggers_update` liste uniquement les capteurs Pronote. Une mise à jour d'une autre entité ne réaffiche donc pas la carte et ne la renvoie pas sur aujourd'hui pendant la navigation.
 
+## Remerciements
+
+Merci à celles et ceux qui ont testé le tableau de bord et signalé des problèmes :
+
+- **[@izidor78](https://github.com/izidor78)** : signalement de la moyenne générale fausse (issue #1), avec la piste du capteur officiel `overall_average`.
+- **[@dbzzzde](https://github.com/dbzzzde)** : signalement des flèches qui ne répondaient pas sur mobile (issue #3), avec la correction tactile et le filtre des cours annulés repris par un autre professeur.
+- **Guillaume**, du groupe Facebook Home Assistant : la variante avec toutes les notes du trimestre et les messages non lus.
+
+Les suggestions et les retours sont les bienvenus dans les issues. Pour proposer une modification, forkez le dépôt et ouvrez une Pull Request.
+
 ## Crédits
 
 - Données : intégration [hass-pronote](https://github.com/delphiki/hass-pronote) de delphiki.
