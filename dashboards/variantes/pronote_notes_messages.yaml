@@ -257,7 +257,7 @@ views:
                       ${chip('mdi:alarm', reveil, 'Réveil ' + jourReveil)}
                       ${chip('mdi:clock-start', debut, 'Début prochain jour')}
                       <details style="flex:1;min-width:110px;padding:10px 12px;border-radius:16px;background:rgba(15,18,28,.45);border:1px solid rgba(255,255,255,.14)">
-                        <summary onclick="event.stopPropagation();" style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px">
+                        <summary onclick="event.stopPropagation();" ontouchstart="event.stopPropagation()" ontouchend="event.stopPropagation()" onpointerdown="event.stopPropagation()" onpointerup="event.stopPropagation()" onmousedown="event.stopPropagation()" style="touch-action:manipulation;cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px">
                           <ha-icon icon="mdi:email-outline" style="--mdc-icon-size:22px;opacity:.9"></ha-icon>
                           <div><div style="font-size:18px;font-weight:800;line-height:1.1">${ok(infos) ? infos : '–'}</div><div style="font-size:11px;opacity:.85">Infos non lues</div></div>
                         </summary>
@@ -374,7 +374,7 @@ views:
                   let out = variables.css + `<div class="t"><div class="ic" style="background:#0ea5e9"><ha-icon icon="mdi:star-circle"></ha-icon></div>Dernières notes</div>`;
                   if (!notes.length) return out + `<div class="vide">Aucune note pour cette période</div>`;
                   for (const [i, g] of notes.entries()) {
-                    if (i === 8) out += `<details style="margin-top:12px"><summary onclick="event.stopPropagation();" style="cursor:pointer;padding:12px;background:rgba(127,127,127,.12);border-radius:10px;font-weight:600">Voir les ${notes.length - 8} autres notes</summary>`;
+                    if (i === 8) out += `<details style="margin-top:12px"><summary onclick="event.stopPropagation();" ontouchstart="event.stopPropagation()" ontouchend="event.stopPropagation()" onpointerdown="event.stopPropagation()" onpointerup="event.stopPropagation()" onmousedown="event.stopPropagation()" style="touch-action:manipulation;cursor:pointer;padding:12px;background:rgba(127,127,127,.12);border-radius:10px;font-weight:600">Voir les ${notes.length - 8} autres notes</summary>`;
                     const v = num(g.grade), sur = num(g.out_of) || 20, cl = num(g.class_average);
                     const r = v !== null ? v / sur : null;
                     const coul = r === null ? '#78909c' : r >= 0.75 ? '#16a34a' : r >= 0.5 ? '#f59e0b' : '#dc2626';
