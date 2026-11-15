@@ -26,6 +26,7 @@ button_card_templates:
       - sensor.pronote_nom_prenom_period_s_timetable
       - sensor.pronote_nom_prenom_grades
       - sensor.pronote_nom_prenom_averages
+      - sensor.pronote_nom_prenom_overall_average
       - sensor.pronote_nom_prenom_evaluations
       - sensor.pronote_nom_prenom_absences
       - sensor.pronote_nom_prenom_delays
@@ -89,7 +90,7 @@ button_card_templates:
           input.sel { display:none; }
           .panel { display:none; }
           .nav { margin-left:auto; display:flex; align-items:center; gap:6px; }
-          .nav label { width:30px; height:30px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; background:rgba(127,127,127,.16); font-size:20px; font-weight:700; user-select:none; }
+          .nav label { width:36px; height:36px; touch-action:manipulation; -webkit-tap-highlight-color:transparent; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; background:rgba(127,127,127,.16); font-size:20px; font-weight:700; user-select:none; }
           .nav label:hover { background:rgba(127,127,127,.3); }
           .nav label.off { opacity:.25; cursor:default; }
           .pts { display:flex; gap:4px; }
@@ -150,10 +151,19 @@ button_card_templates:
             const fin = Math.max(...parJour[ajK].map(c => new Date(c.end_at).getTime()));
             if (now.getTime() > fin) def = 1;
           }
-          const fl = (id, txt) => `<label for="${id}" onclick="this.getRootNode().getElementById('${id}').checked = true">${txt}</label>`;
+          const fl = (id, txt) => `<label for="${id}" onclick="this.getRootNode().getElementById('${id}').checked = true" ontouchstart="event.stopPropagation()" ontouchend="event.stopPropagation()" onpointerdown="event.stopPropagation()" onpointerup="event.stopPropagation()" onmousedown="event.stopPropagation()">${txt}</label>`;
           let css = '<style>', radios = '', panels = '';
           dates.forEach((k, i) => {
-            const cours = parJour[k].slice().sort((a, b) => String(a.start_at).localeCompare(String(b.start_at)));
+            let cours = parJour[k].slice().sort((a, b) => String(a.start_at).localeCompare(String(b.start_at)));
+            cours = cours.filter(c => {
+            if (!c.canceled) return true;
+            return !cours.some(r =>
+            !r.canceled &&
+            r.lesson === c.lesson &&
+            r.start_at === c.start_at &&
+            r.end_at === c.end_at
+            );
+            });
             const [y, m, d] = k.split('-');
             const date = new Date(+y, m - 1, +d);
             const titre = k === ajK ? "Aujourd'hui" : k === demK ? 'Demain' : date.toLocaleDateString('fr-FR', { weekday: 'long' }).replace(/^./, s => s.toUpperCase());
@@ -289,7 +299,7 @@ views:
                     <div style="line-height:1.15">${titre}<div class="sub" style="font-weight:500">${sous}</div></div>${nav || ''}</div>`;
                   if (!menus.length) return variables.css + entete('Cantine', '') + `<div class="vide">Pas de menu publié</div>`;
                   const plats = [['first_meal', '🥗', 'Entrée'], ['main_meal', '🍗', 'Plat'], ['side_meal', '🥔', 'Accompagnement'], ['cheese', '🧀', 'Fromage'], ['dessert', '🍰', 'Dessert'], ['other_meal', '➕', 'Autre']];
-                  const fl = (id, txt) => `<label for="${id}" onclick="this.getRootNode().getElementById('${id}').checked = true">${txt}</label>`;
+                  const fl = (id, txt) => `<label for="${id}" onclick="this.getRootNode().getElementById('${id}').checked = true" ontouchstart="event.stopPropagation()" ontouchend="event.stopPropagation()" onpointerdown="event.stopPropagation()" onpointerup="event.stopPropagation()" onmousedown="event.stopPropagation()">${txt}</label>`;
                   let css = '<style>', radios = '', panels = '';
                   menus.forEach((m, i) => {
                     const [y, mo, d] = m.date.split('-');
